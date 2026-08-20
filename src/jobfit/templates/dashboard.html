@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JobFit — Angelina Bai</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <p class="eyebrow">PERSONAL JOB DISCOVERY</p>
+    <h1>JobFit</h1>
+    <p class="subtitle">A production job-discovery and personalized matching platform · Tech + Quant</p>
+  </div>
+  <div class="top-actions">
+    <nav class="nav-tabs"><a class="active" href="/">Jobs</a>{% if is_admin %}<a href="/applications">Applications</a>{% endif %}<a href="/?eligibility=excluded&min_score=0&sponsorship=any&region=all">Excluded</a>{% if public_mode and not is_admin %}<a href="/applications">Admin</a>{% endif %}</nav>
+    {% if is_admin %}
+    <form method="post" action="/scan"><button class="primary" type="submit">Scan all sources now</button></form>
+    {% endif %}
+  </div>
+</header>
+
+<main>
+  {% if message %}<div class="message">{{ message }}</div>{% endif %}
+
+  <section class="metrics">
+    <article><strong>{{ metrics.jobs }}</strong><span>Active jobs</span></article>
+    <article><strong>{{ metrics.sources }}</strong><span>Active sources</span></article>
+    <article><strong>{{ metrics.last_refreshed.strftime('%Y-%m-%d %H:%M UTC') if metrics.last_refreshed else 'Pending' }}</strong><span>Latest data refresh</span></article>
+    {% if is_admin %}
+    <article><strong>{{ metrics.saved }}</strong><span>Saved</span></article>
+    <article><strong>{{ metrics.applied }}</strong><span>Applied</span></article>
+    <article><strong>{{ metrics.interviews }}</strong><span>Interviews</span></article>
+    {% endif %}
+  </section>
+
+  {% if public_mode and not is_admin %}<div class="notice"><strong>Public portfolio demo:</strong> Browse live public job data and JobFit's matching explanations. Personal application tracking and all data-changing controls are private.</div>{% endif %}
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div><p class="eyebrow">TODAY</p><h2>{% if filters.eligibility == 'excluded' %}Excluded listings{% else %}Best opportunities to review now{% endif %}</h2></div>
+      {% if is_admin %}<a class="link-button" href="/applications">Open application tracker</a>{% endif %}
+    </div>
+    <form class="filters" method="get" action="/">
+      <label>Role keywords<input id="role-keywords" name="query" value="{{ filters.query }}" placeholder="data science, quant, machine learning"></label>
+      <label>Keyword match
+        <select name="keyword_scope">
+          <option value="title" {% if filters.keyword_scope == 'title' %}selected{% endif %}>Job title only</option>
+          <option value="all" {% if filters.keyword_scope == 'all' %}selected{% endif %}>Title + description</option>
+        </select>
+      </label>
+      <label>Location keywords<input name="location" value="{{ filters.location }}" placeholder="New York, Shanghai, Singapore"></label>
+      <label>Preferred regions
+        <select name="region">
+          <option value="preferred" {% if filters.region == 'preferred' %}selected{% endif %}>U.S. + China + Singapore</option>
+          <option value="us" {% if filters.region == 'us' %}selected{% endif %}>United States only</option>
+          <option value="china" {% if filters.region == 'china' %}selected{% endif %}>China only</option>
+          <option value="singapore" {% if filters.region == 'singapore' %}selected{% endif %}>Singapore only</option>
+          <option value="all" {% if filters.region == 'all' %}selected{% endif %}>All locations</option>
+        </select>
+      </label>
+      <label>Eligibility
+        <select name="eligibility">
+          <option value="eligible" {% if filters.eligibility == 'eligible' %}selected{% endif %}>Eligible / recommended</option>
+          <option value="excluded" {% if filters.eligibility == 'excluded' %}selected{% endif %}>Excluded jobs</option>
+          <option value="all" {% if filters.eligibility == 'all' %}selected{% endif %}>All jobs</option>
+        </select>
+      </label>
+      <label>Career track
+        <select name="career_track">
+          <option value="all" {% if filters.career_track == 'all' %}selected{% endif %}>Tech + Quant</option>
+          <option value="tech" {% if filters.career_track == 'tech' %}selected{% endif %}>Tech only</option>
+          <option value="quant" {% if filters.career_track == 'quant' %}selected{% endif %}>Quant only</option>
+          <option value="adjacent" {% if filters.career_track == 'adjacent' %}selected{% endif %}>Adjacent roles</option>
+        </select>
+      </label>
+      <label>OPT/F-1 posting signal
+        <select name="sponsorship">
+          {% for value, label in [('not-incompatible','Exclude explicit conflicts'),('compatible','Positive language only'),('unknown','Unstated only'),('incompatible','Explicit conflicts'),('any','Any')] %}
+          <option value="{{ value }}" {% if filters.sponsorship == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Minimum fit score<input type="number" min="0" max="100" name="min_score" value="{{ filters.min_score }}"></label>
+      {% if is_admin %}<label>Tracker state
+        <select name="status">
+          <option value="all" {% if filters.status == 'all' %}selected{% endif %}>Untracked + saved</option>
+          <option value="untracked" {% if filters.status == 'untracked' %}selected{% endif %}>Untracked only</option>
+          <option value="saved" {% if filters.status == 'saved' %}selected{% endif %}>Saved only</option>
+        </select>
+      </label>{% else %}<input type="hidden" name="status" value="all">{% endif %}
+      <label>Sort order
+        <select name="sort_mode">
+          <option value="today" {% if filters.sort_mode == 'today' %}selected{% endif %}>Today: fit + freshness</option>
+          <option value="title-first" {% if filters.sort_mode == 'title-first' %}selected{% endif %}>Entry-title signals first</option>
+          <option value="score" {% if filters.sort_mode == 'score' %}selected{% endif %}>Fit score only</option>
+        </select>
+      </label>
+      <label>Results<input type="number" min="1" max="200" name="limit" value="{{ filters.limit }}"></label>
+      <button class="primary" type="submit">Apply filters</button>
+    </form>
+
+    <div class="notice">Jobs marked Applied, Assessment, Interview, Offer, Rejected, or Withdrawn automatically leave this page and move to Applications. Experience requirements lower a job's ranking but do not exclude it. Hard exclusions include PhD-required roles and clearly mid/senior titles.</div>
+
+    <div class="job-list">
+      {% for row in rows %}
+      <article class="job-card">
+        <div class="score">{{ row.match.score }}</div>
+        <div class="job-main">
+          <div class="job-title-row">
+            <div><h3>{{ row.job.title }}</h3><p>{{ row.job.company }} · {{ row.job.location or 'Location not stated' }}</p></div>
+            <span class="badge visa-{{ row.match.sponsorship.value }}">{{ row.match.sponsorship.value }}</span>
+          </div>
+          <div class="tags">
+            <span class="track-{{ row.match.career_track.value }}">{{ row.match.career_track.value|title }}</span>
+            <span>{% if row.age_days == 0 %}Posted today{% elif row.age_days == 1 %}Posted 1 day ago{% else %}Posted {{ row.age_days }} days ago{% endif %}</span>
+            <span>Title: {{ row.match.title_seniority }}</span><span>Overall: {{ row.match.seniority }}</span><span>Region: {{ row.match.location_region }}</span>
+            {% if row.match.degree.value != 'none' %}<span>{{ row.match.degree.value }}</span>{% endif %}
+            {% if row.match.required_experience_years is not none %}<span>{{ row.match.required_experience_years }}+ yrs required</span>{% endif %}
+            {% for skill in row.match.matched_skills[:5] %}<span>{{ skill }}</span>{% endfor %}
+          </div>
+          <p class="why"><strong>Why it fits:</strong> {{ row.match.reasons|join('; ') or 'No strong positive signal found.' }}</p>
+          {% if row.match.concerns %}<p class="concerns"><strong>Check:</strong> {{ row.match.concerns|join('; ') }}</p>{% endif %}
+          {% if row.match.exclusion_reasons %}<p class="concerns"><strong>Excluded because:</strong> {{ row.match.exclusion_reasons|join('; ') }}</p>{% endif %}
+          <div class="job-actions">
+            <a class="primary link-button" href="/jobs/{{ row.job.id }}/open" target="_blank">Open application</a>
+            {% if is_admin %}
+              <form class="quick-action" method="post" action="/jobs/{{ row.job.id }}/status"><input type="hidden" name="status" value="saved"><button type="submit">Save</button></form>
+              <form class="quick-action" method="post" action="/jobs/{{ row.job.id }}/status"><input type="hidden" name="status" value="applied"><button class="success" type="submit">Mark applied</button></form>
+              <form class="quick-action" method="post" action="/jobs/{{ row.job.id }}/dismiss" onsubmit="return confirm('Remove this job from your recommendations?');"><button class="danger" type="submit">Not interested</button></form>
+              {% if row.application and row.application.status == 'saved' %}<span class="badge">Saved</span>{% endif %}
+            {% endif %}
+          </div>
+        </div>
+      </article>
+      {% else %}<div class="empty">No jobs match the current filters.</div>{% endfor %}
+    </div>
+  </section>
+
+  {% if is_admin %}
+  <section class="panel">
+    <div class="panel-heading"><div><p class="eyebrow">COMPANY WATCHLIST</p><h2>Add a public career page</h2></div></div>
+    <p class="muted">Paste a public company careers URL. JobFit extracts and verifies individual job records before saving the source. Zero listings are treated as inconclusive—not as a successful connection—because the board may be empty or unsupported.</p>
+    <form class="watchlist-form" method="post" action="/sources/discover">
+      <input required name="company_name" placeholder="Company name, e.g. Jane Street">
+      <input required name="careers_url" type="url" placeholder="https://company.com/careers">
+      <button class="primary" type="submit">Analyze &amp; add</button>
+    </form>
+    <details class="advanced-source"><summary>Advanced: add a known ATS board manually</summary>
+      <form class="source-form" method="post" action="/sources/add">
+        <input required name="company_name" placeholder="Company name">
+        <select name="source_type"><option value="greenhouse">Greenhouse</option><option value="lever">Lever</option><option value="ashby">Ashby</option><option value="career_page">Generic career page</option></select>
+        <input required name="source_identifier" placeholder="Board identifier or career URL">
+        <input name="careers_url" placeholder="Career page URL (optional)"><button type="submit">Add source</button>
+      </form>
+    </details>
+    <form method="post" action="/sources/seed"><button type="submit">Add starter sources</button></form>
+    <details class="source-manager">
+      <summary>
+        <span><strong>{{ sources|length }} companies</strong> in your watchlist</span>
+        <span class="muted">Expand to manage and scroll</span>
+      </summary>
+      <div class="source-list" aria-label="Company watchlist sources">
+      {% for source in sources %}
+      <article class="source-card">
+        <div class="source-summary">
+          <div>
+            <strong>{{ source.company_name }}</strong>
+            <span>{{ source.source_type }} · {{ 'Enabled' if source.enabled else 'Disabled' }}
+              {% if source.last_scanned_at %} · Last scan {{ source.last_scanned_at.strftime('%Y-%m-%d %H:%M') }}{% endif %}
+              {% if source.careers_url %} · <a href="{{ source.careers_url }}" target="_blank" rel="noopener">career page</a>{% endif %}
+            </span>
+            {% set scan = (latest_scans|default({})).get(source.id) %}
+            {% if not scan %}
+            <span class="scan-state scan-unscanned">Not scanned</span>
+            {% elif scan.status == 'failed' %}
+            <span class="scan-state scan-attention" title="{{ scan.error_message or 'Scan failed verification' }}">Needs attention</span>
+            {% elif scan.status == 'verified' and scan.jobs_found > 0 %}
+            <span class="scan-state scan-verified">Verified · {{ scan.jobs_found }} real role{{ '' if scan.jobs_found == 1 else 's' }}</span>
+            {% elif scan.status == 'verified' %}
+            <span class="scan-state scan-empty">Checked · no verified roles found</span>
+            {% else %}
+            <span class="scan-state scan-legacy">Legacy scan · rescan to verify</span>
+            {% endif %}
+          </div>
+          <div class="source-actions">
+            {% if source.source_type != 'browser_import' %}
+            <form method="post" action="/sources/{{ source.id }}/scan"><button type="submit">Scan now</button></form>
+            <form method="post" action="/sources/{{ source.id }}/toggle"><button type="submit">{{ 'Disable' if source.enabled else 'Enable' }}</button></form>
+            {% endif %}
+          </div>
+        </div>
+        {% if source.source_type != 'browser_import' %}
+        <details>
+          <summary>Edit source</summary>
+          <form class="source-edit-form" method="post" action="/sources/{{ source.id }}/edit">
+            <label>Company<input required name="company_name" value="{{ source.company_name }}"></label>
+            <label>Source type
+              <select name="source_type">
+                {% for source_type in ['greenhouse','lever','ashby','career_page'] %}
+                <option value="{{ source_type }}" {% if source.source_type == source_type %}selected{% endif %}>{{ source_type }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>Identifier / page URL<input required name="source_identifier" value="{{ source.source_identifier }}"></label>
+            <label>Career URL<input name="careers_url" value="{{ source.careers_url or '' }}"></label>
+            <label class="checkbox-label"><input type="checkbox" name="enabled" {% if source.enabled %}checked{% endif %}> Enabled for scheduled scans</label>
+            <button class="primary" type="submit">Save changes</button>
+          </form>
+          <form class="danger-form" method="post" action="/sources/{{ source.id }}/delete" onsubmit="return confirm('Delete this source? Untracked jobs will be removed. Tracked applications will be preserved.');">
+            <button class="danger" type="submit">Delete source</button>
+          </form>
+        </details>
+        {% else %}
+        <span class="muted">Local import/archive source; managed automatically.</span>
+        {% endif %}
+      </article>
+      {% else %}
+      <div class="empty">No sources added yet.</div>
+      {% endfor %}
+      </div>
+    </details>
+    <div class="notice"><strong>Private/login-required sites:</strong> LinkedIn, Handshake, and student portals remain supplementary browser-assisted sources. Public company career pages are the automatic workflow.</div>
+  </section>
+  {% endif %}
+
+  {% if public_mode and not is_admin %}
+  <section class="panel portfolio-about">
+    <div class="panel-heading"><div><p class="eyebrow">ENGINEERING PORTFOLIO</p><h2>How JobFit works</h2></div></div>
+    <p>JobFit collects listings from documented public ATS APIs and public career pages, normalizes them into one schema, deduplicates rescans, and ranks opportunities against a personalized early-career profile.</p>
+    <div class="architecture-grid">
+      <article><strong>Ingestion</strong><span>Conservative connectors with bounded timeouts and failure preservation.</span></article>
+      <article><strong>Matching</strong><span>Explainable scoring for role, skills, seniority, location, degree, and sponsorship signals.</span></article>
+      <article><strong>Operations</strong><span>FastAPI, PostgreSQL, scheduled scans, health checks, and idempotent migrations.</span></article>
+    </div>
+  </section>
+  {% endif %}
+</main>
+<footer>JobFit v0.9.0 · Created by Angelina Bai · MIT License</footer>
+<script>
+(() => {
+  const form = document.querySelector('form.filters'); if (!form) return; let timer;
+  const submit = () => { clearTimeout(timer); timer = setTimeout(() => form.requestSubmit(), 350); };
+  form.querySelectorAll('select, input[type="number"]').forEach(el => el.addEventListener('change', submit));
+  form.querySelectorAll('input[type="text"], input:not([type])').forEach(el => el.addEventListener('input', submit));
+})();
+</script>
+</body>
+</html>

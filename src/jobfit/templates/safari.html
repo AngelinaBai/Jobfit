@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Install Save to JobFit · Safari</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar"><div><p class="eyebrow">SAFARI IMPORT</p><h1>Save to JobFit</h1><p class="subtitle">Import a job from LinkedIn, Handshake, 12twenty, or another job page without sharing your login.</p></div><a class="link-button primary" href="/">Back to JobFit</a></header>
+  <main>
+    <section class="panel">
+      <h2>One-time setup</h2>
+      <ol class="setup-steps">
+        <li>In Safari, create a bookmark in <strong>Favorites</strong> and name it <strong>Save to JobFit</strong>.</li>
+        <li>Open <strong>Bookmarks → Edit Bookmarks</strong>.</li>
+        <li>Find <strong>Save to JobFit</strong>, edit its address, and replace the existing URL with the code below.</li>
+        <li>Keep <code>jobfit-web</code> running whenever you use the bookmark.</li>
+      </ol>
+      <textarea id="bookmarklet" class="bookmarklet-code" readonly>{{ bookmarklet }}</textarea>
+      <button class="primary" id="copy">Copy bookmarklet code</button>
+      <p id="copy-status" class="muted"></p>
+    </section>
+    <section class="panel">
+      <h2>How to use it</h2>
+      <p>Log in to LinkedIn, Handshake, or your school career portal normally. Open one specific job listing, then click <strong>Save to JobFit</strong> in Safari Favorites. A JobFit review page opens in a new tab. Check the extracted fields and click <strong>Save job</strong>.</p>
+      <div class="notice">JobFit does not receive your password, MFA code, cookies, or login session. The bookmark only reads visible job-page text and sends the selected fields to your local JobFit server.</div>
+    </section>
+  </main>
+  <footer>JobFit v0.9.0 · Created by Angelina Bai · MIT License</footer>
+<script>
+const button = document.getElementById('copy');
+button.addEventListener('click', async () => {
+  const text = document.getElementById('bookmarklet').value;
+  try {
+    await navigator.clipboard.writeText(text);
+    document.getElementById('copy-status').textContent = 'Copied. Paste it into the bookmark address.';
+  } catch (_) {
+    const box = document.getElementById('bookmarklet');
+    box.focus(); box.select();
+    document.getElementById('copy-status').textContent = 'Selected. Press Command+C to copy.';
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Review imported job · JobFit</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar"><div><p class="eyebrow">BROWSER IMPORT</p><h1>Review job</h1><p class="subtitle">Correct anything Safari could not identify before saving.</p></div><a class="link-button" href="/">Cancel</a></header>
+  <main>
+    <section class="panel">
+      <form method="post" action="/bookmarklet/save" class="review-form">
+        <label>Job title<input required name="title" value="{{ title }}"></label>
+        <label>Company<input required name="company" value="{{ company }}"></label>
+        <label>Location<input name="location" value="{{ location }}"></label>
+        <label>Job URL<input required name="job_url" value="{{ job_url }}"></label>
+        <label>Source<input readonly name="platform" value="{{ platform }}"></label>
+        <label class="wide">Job description<textarea name="description" rows="18">{{ description }}</textarea></label>
+        <div class="wide"><button type="submit" class="primary">Save job to JobFit</button></div>
+      </form>
+    </section>
+  </main>
+  <footer>JobFit v0.9.0 · Created by Angelina Bai · MIT License</footer>
+</body>
+</html>

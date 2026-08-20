@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jobfit-ingestion"
+version = "0.9.0"
+description = "Personalized job discovery, matching, and application tracking dashboard"
+authors = [{name = "Angelina Bai", email = "AngelinaBai@users.noreply.github.com"}]
+license = {file = "LICENSE"}
+requires-python = ">=3.12"
+dependencies = [
+  "SQLAlchemy>=2.0,<3.0",
+  "psycopg[binary]>=3.2,<4.0",
+  "requests>=2.32,<3.0",
+  "fastapi>=0.116,<1.0",
+  "uvicorn>=0.35,<1.0",
+  "jinja2>=3.1,<4.0",
+  "python-multipart>=0.0.20,<1.0",
+  "beautifulsoup4>=4.12,<5.0",
+  "playwright>=1.46,<2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<9.0",
+  "pytest-cov>=6.0,<7.0",
+]
+
+[project.scripts]
+jobfit-scan = "jobfit.cli:main"
+jobfit-list = "jobfit.list_cli:main"
+jobfit-source = "jobfit.source_cli:main"
+jobfit-schedule = "jobfit.schedule_cli:main"
+jobfit-apply = "jobfit.application_cli:main"
+jobfit-match = "jobfit.match_cli:main"
+jobfit-web = "jobfit.web:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.setuptools.package-data]
+jobfit = ["templates/*.html", "static/*.css"]

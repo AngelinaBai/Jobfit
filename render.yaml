@@ -1,0 +1,50 @@
+services:
+  - type: web
+    name: jobfit-web
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    dockerCommand: uvicorn jobfit.web:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: jobfit-postgres
+          property: connectionString
+      - key: PUBLIC_MODE
+        value: "true"
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: LOG_LEVEL
+        value: INFO
+      - key: HTTP_TIMEOUT_SECONDS
+        value: "20"
+
+  - type: cron
+    name: jobfit-scan
+    runtime: docker
+    plan: starter
+    schedule: "17 */6 * * *"
+    dockerfilePath: ./Dockerfile
+    dockerCommand: jobfit-scan --create-tables
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: jobfit-postgres
+          property: connectionString
+      - key: LOG_LEVEL
+        value: INFO
+      - key: HTTP_TIMEOUT_SECONDS
+        value: "20"
+
+databases:
+  - name: jobfit-postgres
+    plan: basic-256mb
+    databaseName: jobfit
+    user: jobfit
+    postgresMajorVersion: "17"
+    ipAllowList: []

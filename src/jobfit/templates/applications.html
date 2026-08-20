@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Applications · JobFit</title><link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <div><p class="eyebrow">APPLICATION TRACKER</p><h1>Applications</h1><p class="subtitle">Track every application, including jobs you found outside JobFit.</p></div>
+  <nav class="nav-tabs"><a href="/">Jobs</a><a class="active" href="/applications">Applications</a><a href="/?eligibility=excluded&min_score=0&sponsorship=any&region=all">Excluded</a></nav>
+</header>
+<main>
+  {% if message %}<div class="message">{{ message }}</div>{% endif %}
+  <section class="metrics application-metrics">
+    <article><strong>{{ metrics.total }}</strong><span>Total tracked</span></article><article><strong>{{ metrics.applied }}</strong><span>Applied</span></article><article><strong>{{ metrics.assessments }}</strong><span>Assessments</span></article><article><strong>{{ metrics.interviews }}</strong><span>Interviews</span></article><article><strong>{{ metrics.offers }}</strong><span>Offers</span></article><article><strong>{{ metrics.rejected }}</strong><span>Rejected</span></article>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading"><div><p class="eyebrow">MANUAL ENTRY</p><h2>Add an application</h2></div></div>
+    <p class="muted">Use this for LinkedIn, Handshake, referrals, recruiters, or any application JobFit did not discover automatically.</p>
+    <form class="manual-application-form" method="post" action="/applications/manual">
+      <label>Company *<input required name="company" placeholder="Company"></label>
+      <label>Job title *<input required name="title" placeholder="Job title"></label>
+      <label>Location<input name="location" placeholder="New York, NY"></label>
+      <label>Job URL<input type="url" name="job_url" placeholder="https://..."></label>
+      <label>Status<select name="status">{% for item in statuses %}<option value="{{ item }}" {% if item == 'applied' %}selected{% endif %}>{{ item|title }}</option>{% endfor %}</select></label>
+      <label>Application date<input type="date" name="applied_date" value="{{ today }}"></label>
+      <label>Source<select name="source_label"><option>Company Website</option><option>LinkedIn</option><option>Handshake</option><option>12twenty</option><option>Referral</option><option>Recruiter</option><option>Other</option></select></label>
+      <label>Resume used<input name="resume_version" placeholder="Tech / Quant / file name"></label>
+      <label class="wide">Notes<textarea name="notes" rows="3" placeholder="Assessment deadline, recruiter, referral, interview notes..."></textarea></label>
+      <div class="wide"><button class="primary" type="submit">Add application</button></div>
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading"><div><p class="eyebrow">TRACKER</p><h2>Your applications</h2></div></div>
+    <form class="application-filters" method="get" action="/applications">
+      <label>Search<input name="query" value="{{ filters.query }}" placeholder="company, role, location"></label>
+      <label>Status<select name="status"><option value="all">All statuses</option>{% for item in statuses %}<option value="{{ item }}" {% if filters.status == item %}selected{% endif %}>{{ item|title }}</option>{% endfor %}</select></label>
+      <button type="submit">Filter</button>
+    </form>
+
+    <div class="application-table-wrap"><table class="application-table">
+      <thead><tr><th>Company / Role</th><th>Status</th><th>Applied</th><th>Source</th><th>Resume</th><th>Notes</th><th>Actions</th></tr></thead>
+      <tbody>
+      {% for application in applications %}
+      <tr>
+        <td><strong>{{ application.job.company }}</strong><br><span>{{ application.job.title }}</span>{% if application.job.location %}<br><small>{{ application.job.location }}</small>{% endif %}</td>
+        <td><span class="badge status-{{ application.status }}">{{ application.status }}</span></td>
+        <td>{{ application.applied_at.strftime('%Y-%m-%d') if application.applied_at else '—' }}</td>
+        <td>{% if application.job.source.source_identifier.startswith('manual-') %}{{ application.job.source.company_name.replace('Manual: ', '') }}{% else %}{{ application.job.source.company_name }}{% endif %}</td>
+        <td>{{ application.resume_version or '—' }}</td><td class="notes-cell">{{ application.notes or '—' }}</td>
+        <td>
+          <div class="table-actions">{% if application.job.job_url and application.job.job_url != 'about:blank' %}<a class="link-button" href="/jobs/{{ application.job.id }}/open" target="_blank">Open</a>{% endif %}
+          <form method="post" action="/applications/{{ application.id }}/status">
+            <select name="status">{% for item in statuses %}<option value="{{ item }}" {% if application.status == item %}selected{% endif %}>{{ item|title }}</option>{% endfor %}</select>
+            <input name="resume_version" value="{{ application.resume_version or '' }}" placeholder="Resume">
+            <input name="notes" value="{{ application.notes or '' }}" placeholder="Notes"><button type="submit">Update</button>
+          </form></div>
+        </td>
+      </tr>
+      {% else %}<tr><td colspan="7" class="empty">No applications match the current filters.</td></tr>{% endfor %}
+      </tbody>
+    </table></div>
+  </section>
+</main>
+<footer>JobFit v0.9.0 · Created by Angelina Bai · MIT License</footer>
+</body></html>
