@@ -99,14 +99,20 @@ def test_render_and_github_deployment_files_exist():
     dockerfile = (root / "Dockerfile").read_text()
     blueprint = (root / "render.yaml").read_text()
     workflow = (root / ".github/workflows/ci.yml").read_text()
+    scan_workflow = (root / ".github/workflows/scan.yml").read_text()
     assert "FROM python:3.12-slim" in dockerfile
     assert "USER jobfit" in dockerfile
     assert "jobfit-web" in blueprint
-    assert "jobfit-scan" in blueprint
+    assert "plan: free" in blueprint
+    assert "type: cron" not in blueprint
+    assert "databases:" not in blueprint
     assert "PUBLIC_MODE" in blueprint
     assert "ADMIN_PASSWORD" in blueprint
     assert "/healthz" in blueprint
     assert "pytest" in workflow
+    assert "jobfit-scan --create-tables" in scan_workflow
+    assert "secrets.DATABASE_URL" in scan_workflow
+    assert "schedule:" in scan_workflow
 
 
 def test_v072_dashboard_has_source_management_controls():

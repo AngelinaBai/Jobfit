@@ -49,13 +49,12 @@ Your existing PostgreSQL jobs and applications are preserved.
 
 ## Public portfolio deployment
 
-JobFit is designed to use GitHub for source control and Render for the running
-FastAPI service, PostgreSQL database, and scheduled scans. The included
-`render.yaml` provisions:
+JobFit can be hosted without a paid plan by combining GitHub, Render, and Neon.
+The included configuration uses:
 
-- a Docker-based web service with a `/healthz` health check;
-- a private Render PostgreSQL 17 database;
-- a scanner cron job that refreshes enabled public sources every six hours; and
+- a free Docker-based Render web service with a `/healthz` health check;
+- a free Neon serverless PostgreSQL database;
+- a GitHub Actions workflow that refreshes public sources every six hours; and
 - production public mode with administrator authentication for private data and
   every write operation.
 
@@ -66,28 +65,31 @@ in Render to access those controls.
 
 ### Deploy from GitHub
 
-1. Create a GitHub repository and push this project. Do not add `.env`; it is
-   ignored and must remain local.
-2. In Render, choose **New → Blueprint**, connect the GitHub repository, and
-   select the repository's `render.yaml`.
-3. When prompted for `ADMIN_PASSWORD`, enter a long unique password. Keep
-   `ADMIN_USERNAME=admin`, or change it in Render after provisioning.
-4. Review the proposed paid resources before applying the Blueprint. The
-   reliable résumé configuration uses a Starter web service, Starter cron job,
-   and Basic PostgreSQL database.
-5. After the first deploy, trigger `jobfit-scan` once in Render to populate the
-   hosted database. Browser refreshes then show the latest stored results, while
-   the cron job refreshes the data automatically.
-6. Add the Render URL to the GitHub repository description and your résumé.
+1. Create a free Neon project and copy its pooled PostgreSQL connection string.
+   Keep this value private.
+2. In GitHub, open **Settings → Secrets and variables → Actions**, create a
+   repository secret named `DATABASE_URL`, and paste the Neon connection string.
+3. In Render, choose **New → Blueprint**, connect this GitHub repository, and
+   select `render.yaml`.
+4. When prompted, paste the same Neon connection string for `DATABASE_URL` and
+   enter a long unique `ADMIN_PASSWORD`. Keep `ADMIN_USERNAME=admin`, or change
+   it in Render after provisioning. The Blueprint should show one **Free** web
+   service and no Render database or cron service.
+5. In GitHub, open **Actions → Refresh Job Listings → Run workflow** to populate
+   the database immediately. Future scans run automatically every six hours.
+6. After Render finishes deploying, open its URL and add it to the GitHub
+   repository description and your résumé.
 
 GitHub Actions runs the complete test suite for pushes and pull requests. Render
-deploys only after those checks pass.
+deploys only after those checks pass. A free Render service sleeps after a period
+without traffic, so its first page load may take about a minute; the data remains
+in Neon while the web service sleeps.
 
 ### Production environment variables
 
 | Variable | Purpose |
 | --- | --- |
-| `DATABASE_URL` | Render injects the private PostgreSQL connection string. |
+| `DATABASE_URL` | Private Neon PostgreSQL connection string, set in both Render and GitHub Actions. |
 | `PUBLIC_MODE=true` | Enables the public read-only/private-admin boundary. |
 | `ADMIN_USERNAME` | Username for private features. |
 | `ADMIN_PASSWORD` | Required secret; never commit it. |
