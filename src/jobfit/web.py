@@ -252,7 +252,12 @@ const vals={title:title,company:company,location:loc,description:description,job
 @app.get("/", response_class=HTMLResponse)
 def dashboard(
     request: Request,
-    query: str = Query("quant,data science,machine learning,artificial intelligence,ai,software engineer,software developer,analytics,risk,research"),
+    query: str = Query(
+        "quant,quantitative trader,quantitative researcher,quantitative developer,"
+        "quant trader,quant researcher,trader,trading,data science,machine learning,"
+        "artificial intelligence,ai,software engineer,software developer,analytics,"
+        "risk,research"
+    ),
     location: str = Query(""),
     sponsorship: str = Query("not-incompatible"),
     region: str = Query("preferred"),

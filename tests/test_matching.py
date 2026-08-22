@@ -194,6 +194,19 @@ def test_hrt_quant_research_graduate_title_is_recommended() -> None:
     assert result.career_track == CareerTrack.QUANT
 
 
+def test_quantitative_trader_is_an_explicit_target_role() -> None:
+    result = score_job(
+        make_job(
+            title="Quantitative Trader - Entry Level 2027",
+            description="Develop trading strategies using probability and market data.",
+            location="Chicago, Illinois",
+        )
+    )
+    assert result.eligible is True
+    assert result.career_track == CareerTrack.QUANT
+    assert any("target role match: quantitative trader" in reason for reason in result.reasons)
+
+
 def test_machine_learning_role_is_classified_as_tech() -> None:
     result = score_job(make_job(title="Machine Learning Engineer, New Grad", description="Python and SQL"))
     assert result.career_track == CareerTrack.TECH
