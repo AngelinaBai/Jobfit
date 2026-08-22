@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import joinedload
 
 from jobfit.config import Settings
@@ -119,19 +119,33 @@ def _get_dashboard_jobs(
     keyword_scope: str,
     career_track: str,
 ) -> list[dict]:
+    query_terms = _parse_terms(query)
+    location_terms = _parse_terms(location)
+
     with SessionFactory() as session:
+        statement = (
+            select(Job)
+            .options(joinedload(Job.application))
+            .where(Job.status == "active", Job.dismissed.is_(False))
+            .order_by(Job.date_discovered.desc())
+        )
+        # Provider-hosted PostgreSQL is network-bound. Apply conservative SQL
+        # supersets first, then retain the exact word-boundary checks below.
+        if query_terms and keyword_scope == "title":
+            statement = statement.where(
+                or_(*(Job.title.ilike(f"%{term}%") for term in query_terms))
+            )
+        if location_terms:
+            statement = statement.where(
+                or_(*(Job.location.ilike(f"%{term}%") for term in location_terms))
+            )
+
         jobs = list(
             session.scalars(
-                select(Job)
-                .options(joinedload(Job.application))
-                .where(Job.status == "active", Job.dismissed.is_(False))
-                .order_by(Job.date_discovered.desc())
-                .limit(10000)
+                statement.limit(10000)
             ).unique().all()
         )
 
-    query_terms = _parse_terms(query)
-    location_terms = _parse_terms(location)
     rows: list[dict] = []
     hidden_statuses = {
         ApplicationStatus.APPLIED.value,
