@@ -110,7 +110,7 @@ def test_render_and_github_deployment_files_exist():
     assert "ADMIN_PASSWORD" in blueprint
     assert "/healthz" in blueprint
     assert "pytest" in workflow
-    assert "jobfit-scan --create-tables" in scan_workflow
+    assert "jobfit-scan --create-tables --seed-sources" in scan_workflow
     assert "secrets.DATABASE_URL" in scan_workflow
     assert "schedule:" in scan_workflow
 

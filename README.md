@@ -76,7 +76,8 @@ in Render to access those controls.
    it in Render after provisioning. The Blueprint should show one **Free** web
    service and no Render database or cron service.
 5. In GitHub, open **Actions → Refresh Job Listings → Run workflow** to populate
-   the database immediately. Future scans run automatically every six hours.
+   the database immediately. The workflow safely seeds the built-in public source
+   catalog on a new database. Future scans run automatically every six hours.
 6. After Render finishes deploying, open its URL and add it to the GitHub
    repository description and your résumé.
 

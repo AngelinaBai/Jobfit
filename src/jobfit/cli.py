@@ -14,6 +14,7 @@ from jobfit.migrations import apply_migrations
 from jobfit.models import Base, Job, JobSource, SourceType
 from jobfit.services.matching import SponsorshipAssessment, score_job
 from jobfit.services.ingestion import scan_source
+from jobfit.services.sources import seed_default_sources
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,11 @@ logger = logging.getLogger(__name__)
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Scan enabled JobFit job sources")
     parser.add_argument("--create-tables", action="store_true")
+    parser.add_argument(
+        "--seed-sources",
+        action="store_true",
+        help="Idempotently add the built-in public source catalog before scanning",
+    )
     parser.add_argument(
         "--show-new",
         action="store_true",
@@ -69,6 +75,13 @@ def main() -> None:
     batch_started_at = datetime.now(UTC)
 
     with session_factory() as session:
+        if args.seed_sources:
+            added, existing = seed_default_sources(session)
+            logger.info(
+                "default_sources_ready",
+                extra={"added": added, "existing": existing},
+            )
+
         sources = session.scalars(
             select(JobSource).where(
                 JobSource.enabled.is_(True),

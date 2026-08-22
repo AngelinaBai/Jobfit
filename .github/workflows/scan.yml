@@ -31,4 +31,4 @@ jobs:
       - name: Install Chromium
         run: python -m playwright install --with-deps chromium
       - name: Refresh listings
-        run: jobfit-scan --create-tables
+        run: jobfit-scan --create-tables --seed-sources
