@@ -22,6 +22,7 @@ from jobfit.connectors.factory import build_connector
 from jobfit.db import build_engine, build_session_factory
 from jobfit.migrations import apply_migrations
 from jobfit.models import Application, ApplicationStatus, Base, Job, JobSource, ScanRun
+from jobfit.profile import DEFAULT_JOB_QUERY
 from jobfit.services.applications import add_manual_application, set_application_status
 from jobfit.services.browser_import import import_browser_job
 from jobfit.services.career_discovery import discover_career_source
@@ -252,12 +253,7 @@ const vals={title:title,company:company,location:loc,description:description,job
 @app.get("/", response_class=HTMLResponse)
 def dashboard(
     request: Request,
-    query: str = Query(
-        "quant,quantitative trader,quantitative researcher,quantitative developer,"
-        "quant trader,quant researcher,trader,trading,data science,machine learning,"
-        "artificial intelligence,ai,software engineer,software developer,analytics,"
-        "risk,research"
-    ),
+    query: str = Query(DEFAULT_JOB_QUERY),
     location: str = Query(""),
     sponsorship: str = Query("not-incompatible"),
     region: str = Query("preferred"),

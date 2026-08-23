@@ -16,6 +16,7 @@ class CandidateProfile:
 ANGELINA_PROFILE = CandidateProfile(
     target_roles=(
         "quantitative analyst",
+        "quantitative developer",
         "quantitative researcher",
         "quantitative research",
         "quantitative trader",
@@ -26,6 +27,9 @@ ANGELINA_PROFILE = CandidateProfile(
         "quant developer",
         "data scientist",
         "data analyst",
+        "data engineer",
+        "analytics engineer",
+        "business intelligence analyst",
         "machine learning",
         "ml engineer",
         "ai engineer",
@@ -115,3 +119,25 @@ ANGELINA_PROFILE = CandidateProfile(
         "recruiter",
     ),
 )
+
+
+# Keep dashboard discovery synchronized with the personalized scoring profile.
+# Generic aliases cover short-form titles while exact target-role phrases avoid
+# missing variants such as "quantitative" and "scientist".
+DEFAULT_JOB_QUERY_TERMS = tuple(
+    dict.fromkeys(
+        (
+            *ANGELINA_PROFILE.target_roles,
+            "quant",
+            "trading",
+            "ai",
+            "risk",
+            "research",
+            "data science",
+            "data engineering",
+            "data analytics",
+            "business intelligence",
+        )
+    )
+)
+DEFAULT_JOB_QUERY = ",".join(DEFAULT_JOB_QUERY_TERMS)

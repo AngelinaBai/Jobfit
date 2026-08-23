@@ -207,6 +207,22 @@ def test_quantitative_trader_is_an_explicit_target_role() -> None:
     assert any("target role match: quantitative trader" in reason for reason in result.reasons)
 
 
+def test_data_engineering_titles_are_explicit_target_roles() -> None:
+    for title, expected_match in (
+        ("Data Engineer", "data engineer"),
+        ("Analytics Engineer", "analytics engineer"),
+        ("Business Intelligence Analyst", "business intelligence analyst"),
+    ):
+        result = score_job(
+            make_job(title=title, description="Build data systems using Python and SQL.")
+        )
+        assert result.eligible is True
+        assert result.career_track == CareerTrack.TECH
+        assert any(
+            f"target role match: {expected_match}" in reason for reason in result.reasons
+        )
+
+
 def test_machine_learning_role_is_classified_as_tech() -> None:
     result = score_job(make_job(title="Machine Learning Engineer, New Grad", description="Python and SQL"))
     assert result.career_track == CareerTrack.TECH
