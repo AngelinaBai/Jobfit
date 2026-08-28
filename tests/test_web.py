@@ -70,6 +70,7 @@ def test_v072_jobs_page_hides_post_application_statuses():
     assert "ApplicationStatus.APPLIED.value" in web
     assert "ApplicationStatus.INTERVIEW.value" in web
     assert "if job.application and job.application.status in hidden_statuses" in web
+    assert "job_duplicate_keys(job) & hidden_job_keys" in web
 
 
 def test_dashboard_supports_dismissing_unwanted_jobs():

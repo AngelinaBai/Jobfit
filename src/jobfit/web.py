@@ -26,6 +26,7 @@ from jobfit.profile import DEFAULT_JOB_QUERY
 from jobfit.services.applications import add_manual_application, set_application_status
 from jobfit.services.browser_import import import_browser_job
 from jobfit.services.career_discovery import discover_career_source
+from jobfit.services.deduplication import job_duplicate_keys
 from jobfit.services.filtering import matches_terms
 from jobfit.services.ingestion import ingest_verified_jobs, scan_source
 from jobfit.services.matching import SponsorshipAssessment, score_job
@@ -147,20 +148,36 @@ def _get_dashboard_jobs(
             ).unique().all()
         )
 
+        hidden_statuses = {
+            ApplicationStatus.APPLIED.value,
+            ApplicationStatus.ASSESSMENT.value,
+            ApplicationStatus.INTERVIEW.value,
+            ApplicationStatus.OFFER.value,
+            ApplicationStatus.REJECTED.value,
+            ApplicationStatus.WITHDRAWN.value,
+        }
+        tracked_jobs = session.scalars(
+            select(Job)
+            .join(Application, Application.job_id == Job.id)
+            .where(Application.status.in_(hidden_statuses))
+        ).all()
+        hidden_job_keys = {
+            key
+            for tracked_job in tracked_jobs
+            for key in job_duplicate_keys(tracked_job)
+        }
+
     rows: list[dict] = []
-    hidden_statuses = {
-        ApplicationStatus.APPLIED.value,
-        ApplicationStatus.ASSESSMENT.value,
-        ApplicationStatus.INTERVIEW.value,
-        ApplicationStatus.OFFER.value,
-        ApplicationStatus.REJECTED.value,
-        ApplicationStatus.WITHDRAWN.value,
-    }
 
     for job in jobs:
         # Once an application moves beyond Saved, it belongs to Applications,
         # not the discovery/search workflow.
         if job.application and job.application.status in hidden_statuses:
+            continue
+        # A public source can rediscover the same posting under a different
+        # external ID or tracking URL. Hide that sibling from discovery too,
+        # while retaining both database rows and the original application.
+        if job_duplicate_keys(job) & hidden_job_keys:
             continue
 
         result = score_job(job)
