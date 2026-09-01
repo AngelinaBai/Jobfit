@@ -4,7 +4,7 @@ import os
 import base64
 import secrets
 import webbrowser
-from datetime import UTC, date, datetime, timezone
+from datetime import UTC, date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Annotated
 from urllib.parse import quote_plus
@@ -27,7 +27,7 @@ from jobfit.services.applications import add_manual_application, set_application
 from jobfit.services.browser_import import import_browser_job
 from jobfit.services.career_discovery import discover_career_source
 from jobfit.services.deduplication import job_duplicate_keys
-from jobfit.services.filtering import matches_terms
+from jobfit.services.filtering import MAX_POSTED_AGE_DAYS, matches_terms
 from jobfit.services.ingestion import ingest_verified_jobs, scan_source
 from jobfit.services.matching import SponsorshipAssessment, score_job
 from jobfit.services.sources import (
@@ -123,12 +123,17 @@ def _get_dashboard_jobs(
 ) -> list[dict]:
     query_terms = _parse_terms(query)
     location_terms = _parse_terms(location)
+    posting_cutoff = datetime.now(UTC) - timedelta(days=MAX_POSTED_AGE_DAYS)
 
     with SessionFactory() as session:
         statement = (
             select(Job)
             .options(joinedload(Job.application))
-            .where(Job.status == "active", Job.dismissed.is_(False))
+            .where(
+                Job.status == "active",
+                Job.dismissed.is_(False),
+                or_(Job.date_posted.is_(None), Job.date_posted >= posting_cutoff),
+            )
             .order_by(Job.date_discovered.desc())
         )
         # Provider-hosted PostgreSQL is network-bound. Apply conservative SQL
@@ -300,7 +305,12 @@ def dashboard(
 
     with SessionFactory() as session:
         metrics = {
-            "jobs": session.scalar(select(func.count(Job.id)).where(Job.status == "active")) or 0,
+            "jobs": session.scalar(
+                select(func.count(Job.id)).where(
+                    Job.status == "active",
+                    or_(Job.date_posted.is_(None), Job.date_posted >= datetime.now(UTC) - timedelta(days=MAX_POSTED_AGE_DAYS)),
+                )
+            ) or 0,
             "sources": session.scalar(select(func.count(JobSource.id)).where(JobSource.enabled.is_(True))) or 0,
             "saved": session.scalar(select(func.count(Application.id)).where(Application.status == ApplicationStatus.SAVED.value)) or 0,
             "applied": session.scalar(select(func.count(Application.id)).where(Application.status == ApplicationStatus.APPLIED.value)) or 0,

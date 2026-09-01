@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from jobfit.models import Job
 from jobfit.services.filtering import JobFilter, classify_seniority, filter_jobs_in_memory
@@ -33,3 +33,18 @@ def test_entry_filter_excludes_explicit_senior_roles() -> None:
     jobs = [make_job("Quantitative Analyst"), make_job("Senior Data Scientist")]
     result = filter_jobs_in_memory(jobs, JobFilter(seniority="entry"))
     assert [job.title for job in result] == ["Quantitative Analyst"]
+
+
+def test_filter_excludes_postings_older_than_90_days_but_keeps_undated_jobs() -> None:
+    now = datetime(2026, 8, 31, tzinfo=UTC)
+    current = make_job("Current Data Analyst")
+    current.date_posted = now - timedelta(days=90)
+    stale = make_job("Stale Data Analyst")
+    stale.date_posted = now - timedelta(days=91)
+    undated = make_job("Undated Data Analyst")
+
+    result = filter_jobs_in_memory(
+        [current, stale, undated], JobFilter(seniority="entry"), now=now
+    )
+
+    assert [job.title for job in result] == ["Current Data Analyst", "Undated Data Analyst"]

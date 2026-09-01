@@ -37,6 +37,8 @@
 
   {% if public_mode and not is_admin %}<div class="notice"><strong>Public portfolio demo:</strong> Browse live public job data and JobFit's matching explanations. Personal application tracking and all data-changing controls are private.</div>{% endif %}
 
+  <div class="notice">The Jobs feed excludes postings with a known date older than 90 days. Stored jobs are never deleted, and verified reposts return to the feed with their refreshed posting date.</div>
+
   <section class="panel">
     <div class="panel-heading">
       <div><p class="eyebrow">TODAY</p><h2>{% if filters.eligibility == 'excluded' %}Excluded listings{% else %}Best opportunities to review now{% endif %}</h2></div>

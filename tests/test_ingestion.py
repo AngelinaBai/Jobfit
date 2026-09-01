@@ -89,6 +89,31 @@ def test_changed_hash_updates_existing_job(session: Session) -> None:
     assert jobs[0].title == "Senior Quant Analyst"
 
 
+def test_repost_refreshes_posting_date_without_creating_a_duplicate(session: Session) -> None:
+    source = make_source(session)
+    original = make_job()
+    scan_source(session, source, StubConnector([original]))
+    reposted_at = datetime(2026, 8, 31, tzinfo=UTC)
+    reposted = make_job()
+    reposted = NormalizedJob(
+        external_job_id=reposted.external_job_id,
+        title=reposted.title,
+        company=reposted.company,
+        location=reposted.location,
+        description=reposted.description,
+        job_url=reposted.job_url,
+        date_posted=reposted_at,
+        content_hash=reposted.content_hash,
+    )
+
+    summary = scan_source(session, source, StubConnector([reposted]))
+
+    jobs = session.scalars(select(Job)).all()
+    assert summary.updated == 1
+    assert len(jobs) == 1
+    assert jobs[0].date_posted.replace(tzinfo=UTC) == reposted_at
+
+
 def test_failure_is_recorded(session: Session) -> None:
     source = make_source(session)
 

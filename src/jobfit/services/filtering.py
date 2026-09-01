@@ -21,6 +21,8 @@ DEFAULT_TITLE_KEYWORDS = (
     "trading",
 )
 
+MAX_POSTED_AGE_DAYS = 90
+
 SENIOR_MARKERS = (
     "senior",
     "sr.",
@@ -114,6 +116,7 @@ class JobFilter:
     location_keywords: tuple[str, ...] = ()
     seniority: str = "entry"
     since_hours: int | None = None
+    max_posted_age_days: int = MAX_POSTED_AGE_DAYS
     limit: int = 100
 
 
@@ -193,8 +196,31 @@ def matches_seniority(job: Job, requested: str) -> bool:
     return classified == requested
 
 
+def is_current_posting(
+    job: Job,
+    *,
+    now: datetime | None = None,
+    max_age_days: int = MAX_POSTED_AGE_DAYS,
+) -> bool:
+    """Keep undated jobs, but hide postings with a reliably stale date."""
+    if job.date_posted is None:
+        return True
+    observed_now = now or datetime.now(UTC)
+    posted_at = job.date_posted
+    if posted_at.tzinfo is None:
+        posted_at = posted_at.replace(tzinfo=UTC)
+    return posted_at >= observed_now - timedelta(days=max_age_days)
+
+
 def build_job_query(filters: JobFilter, *, now: datetime | None = None) -> Select[tuple[Job]]:
     query = select(Job).where(Job.status == JobStatus.ACTIVE.value)
+    observed_now = now or datetime.now(UTC)
+    query = query.where(
+        or_(
+            Job.date_posted.is_(None),
+            Job.date_posted >= observed_now - timedelta(days=filters.max_posted_age_days),
+        )
+    )
 
     if filters.title_keywords:
         title_conditions = [Job.title.ilike(f"%{keyword}%") for keyword in filters.title_keywords]
@@ -207,13 +233,14 @@ def build_job_query(filters: JobFilter, *, now: datetime | None = None) -> Selec
         query = query.where(or_(*location_conditions))
 
     if filters.since_hours is not None:
-        observed_now = now or datetime.now(UTC)
         query = query.where(Job.date_discovered >= observed_now - timedelta(hours=filters.since_hours))
 
     return query.order_by(Job.date_discovered.desc(), Job.date_posted.desc()).limit(filters.limit)
 
 
-def matches_job(job: Job, filters: JobFilter) -> bool:
+def matches_job(job: Job, filters: JobFilter, *, now: datetime | None = None) -> bool:
+    if not is_current_posting(job, now=now, max_age_days=filters.max_posted_age_days):
+        return False
     title = job.title.lower()
     location = (job.location or "").lower()
     if filters.title_keywords and not any(keyword.lower() in title for keyword in filters.title_keywords):
@@ -225,5 +252,7 @@ def matches_job(job: Job, filters: JobFilter) -> bool:
     return matches_seniority(job, filters.seniority)
 
 
-def filter_jobs_in_memory(jobs: list[Job], filters: JobFilter) -> list[Job]:
-    return [job for job in jobs if matches_job(job, filters)]
+def filter_jobs_in_memory(
+    jobs: list[Job], filters: JobFilter, *, now: datetime | None = None
+) -> list[Job]:
+    return [job for job in jobs if matches_job(job, filters, now=now)]

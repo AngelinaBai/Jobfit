@@ -14,6 +14,16 @@ from jobfit.services.scan_verification import verify_scan_jobs
 logger = logging.getLogger(__name__)
 
 
+def _same_posting_date(left: datetime | None, right: datetime | None) -> bool:
+    if left is None or right is None:
+        return left is right
+    if left.tzinfo is None and right.tzinfo is not None:
+        right = right.replace(tzinfo=None)
+    elif left.tzinfo is not None and right.tzinfo is None:
+        left = left.replace(tzinfo=None)
+    return left == right
+
+
 @dataclass(frozen=True, slots=True)
 class ScanSummary:
     source_id: int
@@ -148,14 +158,23 @@ def _upsert_job(
     existing.last_seen_at = observed_at
     existing.status = JobStatus.ACTIVE.value
 
-    if existing.content_hash == remote.content_hash:
+    posting_date_changed = (
+        remote.date_posted is not None
+        and not _same_posting_date(existing.date_posted, remote.date_posted)
+    )
+    if existing.content_hash == remote.content_hash and not posting_date_changed:
         return "unchanged"
+
+    # Some ATS providers keep the same requisition ID and content when a role
+    # is reposted. Record the refreshed posting date so it becomes current
+    # again without creating or deleting application history.
+    if remote.date_posted is not None:
+        existing.date_posted = remote.date_posted
 
     existing.title = remote.title
     existing.company = remote.company
     existing.location = remote.location
     existing.description = remote.description
     existing.job_url = remote.job_url
-    existing.date_posted = remote.date_posted
     existing.content_hash = remote.content_hash
     return "updated"
