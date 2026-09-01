@@ -41,8 +41,8 @@ def test_seed_default_sources_can_run_twice() -> None:
     engine = create_engine("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(engine)
     with Session(engine) as session:
-        assert seed_default_sources(session) == (4, 0)
-        assert seed_default_sources(session) == (0, 4)
+        assert seed_default_sources(session) == (14, 0)
+        assert seed_default_sources(session) == (0, 14)
 
 
 def test_update_and_toggle_source() -> None:

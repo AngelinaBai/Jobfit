@@ -21,6 +21,16 @@ DEFAULT_SOURCES = (
     SeedSource("Stripe", SourceType.GREENHOUSE.value, "stripe", "https://job-boards.greenhouse.io/stripe"),
     SeedSource("Databricks", SourceType.GREENHOUSE.value, "databricks", "https://job-boards.greenhouse.io/databricks"),
     SeedSource("Scale AI", SourceType.GREENHOUSE.value, "scaleai", "https://job-boards.greenhouse.io/scaleai"),
+    SeedSource("Perplexity", SourceType.ASHBY.value, "perplexity", "https://jobs.ashbyhq.com/perplexity"),
+    SeedSource("MotherDuck", SourceType.ASHBY.value, "motherduck", "https://jobs.ashbyhq.com/motherduck"),
+    SeedSource("OpenEvidence", SourceType.ASHBY.value, "openevidence", "https://jobs.ashbyhq.com/openevidence"),
+    SeedSource("Snorkel AI", SourceType.GREENHOUSE.value, "snorkelai", "https://job-boards.greenhouse.io/snorkelai"),
+    SeedSource("Hightouch", SourceType.GREENHOUSE.value, "hightouch", "https://job-boards.greenhouse.io/hightouch"),
+    SeedSource("Replit", SourceType.ASHBY.value, "replit", "https://jobs.ashbyhq.com/replit"),
+    SeedSource("Cognition", SourceType.ASHBY.value, "cognition", "https://jobs.ashbyhq.com/cognition"),
+    SeedSource("Exa", SourceType.ASHBY.value, "exa", "https://jobs.ashbyhq.com/exa"),
+    SeedSource("OpenRouter", SourceType.ASHBY.value, "openrouter", "https://jobs.ashbyhq.com/openrouter"),
+    SeedSource("PDT Partners", SourceType.GREENHOUSE.value, "pdtpartners", "https://job-boards.greenhouse.io/pdtpartners"),
 )
 DEFAULT_GREENHOUSE_SOURCES = DEFAULT_SOURCES
 
