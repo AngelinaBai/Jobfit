@@ -147,11 +147,10 @@ def _get_dashboard_jobs(
                 or_(*(Job.location.ilike(f"%{term}%") for term in location_terms))
             )
 
-        jobs = list(
-            session.scalars(
-                statement.limit(10000)
-            ).unique().all()
-        )
+        # Bound full-description transfer and scoring to a recent candidate
+        # window; all persisted jobs and application records remain intact.
+        candidate_limit = min(2_000, max(500, limit * 10))
+        jobs = list(session.scalars(statement.limit(candidate_limit)).unique().all())
 
         hidden_statuses = {
             ApplicationStatus.APPLIED.value,
