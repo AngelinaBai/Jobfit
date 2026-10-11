@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
 </head>
 <body>
+{% set jobs_url = "/admin/jobs" if is_admin else "/" %}
 <header class="topbar">
   <div>
     <p class="eyebrow">PERSONAL JOB DISCOVERY</p>
@@ -14,7 +15,7 @@
     <p class="subtitle">A production job-discovery and personalized matching platform · Tech + Quant</p>
   </div>
   <div class="top-actions">
-    <nav class="nav-tabs"><a class="active" href="/">Jobs</a>{% if is_admin %}<a href="/applications">Applications</a>{% endif %}<a href="/?eligibility=excluded&min_score=0&sponsorship=any&region=all">Excluded</a>{% if public_mode and not is_admin %}<a href="/applications">Admin</a>{% endif %}</nav>
+    <nav class="nav-tabs"><a class="active" href="{{ jobs_url }}">Jobs</a>{% if is_admin %}<a href="/applications">Applications</a>{% endif %}<a href="{{ jobs_url }}?eligibility=excluded&min_score=0&sponsorship=any&region=all">Excluded</a>{% if public_mode and not is_admin %}<a href="/admin/jobs">Admin</a>{% endif %}</nav>
     {% if is_admin %}
     <form method="post" action="/scan"><button class="primary" type="submit">Scan all sources now</button></form>
     {% endif %}
@@ -44,7 +45,7 @@
       <div><p class="eyebrow">TODAY</p><h2>{% if filters.eligibility == 'excluded' %}Excluded listings{% else %}Best opportunities to review now{% endif %}</h2></div>
       {% if is_admin %}<a class="link-button" href="/applications">Open application tracker</a>{% endif %}
     </div>
-    <form class="filters" method="get" action="/">
+    <form class="filters" method="get" action="{{ jobs_url }}">
       <label>Role keywords<input id="role-keywords" name="query" value="{{ filters.query }}" placeholder="data science, quant, machine learning"></label>
       <label>Keyword match
         <select name="keyword_scope">

@@ -58,7 +58,7 @@ SessionFactory = build_session_factory(engine)
 Base.metadata.create_all(engine)
 apply_migrations(engine)
 
-PRIVATE_GET_PATHS = {"/applications", "/safari"}
+PRIVATE_GET_PATHS = {"/applications", "/safari", "/admin/jobs"}
 
 
 def _has_admin_credentials(request: Request) -> bool:
@@ -88,6 +88,12 @@ async def protect_private_features(request: Request, call_next):
             headers={"WWW-Authenticate": 'Basic realm="JobFit Admin"'},
         )
     response = await call_next(request)
+    # Keep authenticated writes on a route that challenges for credentials.
+    # Browsers need not send cached Basic credentials to the public homepage.
+    if settings.public_mode and write_request:
+        destination = response.headers.get("location", "")
+        if destination == "/" or destination.startswith("/?"):
+            response.headers["location"] = "/admin/jobs" + destination[1:]
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["X-Frame-Options"] = "DENY"
@@ -271,6 +277,7 @@ const vals={title:title,company:company,location:loc,description:description,job
     return "javascript:" + "".join(line.strip() for line in js.splitlines())
 
 
+@app.get("/admin/jobs", response_class=HTMLResponse, include_in_schema=False)
 @app.get("/", response_class=HTMLResponse)
 def dashboard(
     request: Request,
