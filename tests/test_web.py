@@ -91,7 +91,7 @@ def test_public_portfolio_mode_hides_private_controls_and_requires_admin():
     assert "{% if is_admin %}" in template
     assert "Personal application tracking and all data-changing controls are private" in template
     assert "protect_private_features" in web
-    assert 'PRIVATE_GET_PATHS = {"/applications", "/safari"}' in web
+    assert 'PRIVATE_GET_PATHS = {"/applications", "/safari", "/admin/jobs"}' in web
     assert '@app.get("/healthz"' in web
 
 

@@ -7,7 +7,7 @@
 <body>
 <header class="topbar">
   <div><p class="eyebrow">APPLICATION TRACKER</p><h1>Applications</h1><p class="subtitle">Track every application, including jobs you found outside JobFit.</p></div>
-  <nav class="nav-tabs"><a href="/">Jobs</a><a class="active" href="/applications">Applications</a><a href="/?eligibility=excluded&min_score=0&sponsorship=any&region=all">Excluded</a></nav>
+  <nav class="nav-tabs"><a href="/admin/jobs">Jobs</a><a class="active" href="/applications">Applications</a><a href="/admin/jobs?eligibility=excluded&min_score=0&sponsorship=any&region=all">Excluded</a></nav>
 </header>
 <main>
   {% if message %}<div class="message">{{ message }}</div>{% endif %}
